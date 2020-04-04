@@ -4,6 +4,7 @@ import re
 from bs4 import BeautifulSoup
 from spellchecker import SpellChecker
 import glob, os
+import numpy as np
 
 spellchecker = SpellChecker(language="en", distance=1)
 
@@ -26,7 +27,7 @@ def parse_posts(filename, dictionary_dict):
             if word in dictionary_dict:
                 index = dictionary_dict[word]
             else:
-                index = len(dictionary_dict.keys()) + 1
+                index = len(dictionary_dict.keys())
                 dictionary_dict[word] = index
             post_number_list.append(index)
         post_numericals.append(post_number_list)
@@ -74,6 +75,33 @@ def parse_to_words(raw_posts):
         counter += 1
     return words
 
+def save_post_data(numericals, dictionary_dict, filename="data"):
+
+
+    numerical_array = []
+    for blog in numericals:
+        for post in blog:
+            numerical_array.append(post)
+    total_data = np.array([np.array(numerical_array), np.array(list(dictionary_dict.keys()))])
+    try:
+        np.save(f"parsed_data/{filename}", total_data)
+        return True
+    except Exception:
+        print("FAILED TO SAVE")
+        return False
+
+def transform_to_string(post_list, dictionary_list):
+    result_str_list = []
+    for word_index in post_list:
+         word = dictionary_list[word_index]
+         result_str_list.append(word)
+    return " ".join(result_str_list)
+
+def load_post_data(filename="data"):
+    data = np.load(f"parsed_data/{filename}.npy", allow_pickle=True)
+    posts, keys = data
+    return posts, keys
+
 def parse_all():
     BASE_DATA_DIR = "./raw_data"
     dictionary_dict = {}
@@ -93,4 +121,4 @@ def parse_all():
         except UnicodeError:
             print(f"FAILED {b_name}")
             pass
-parse_all()
+    save_post_data(post_numericals, dictionary_dict)
